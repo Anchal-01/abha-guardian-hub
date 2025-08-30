@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, IdCard, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL
 
 const AadharVerification = () => {
   const [aadharNumber, setAadharNumber] = useState("");
@@ -13,9 +21,34 @@ const AadharVerification = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Retrieve session token from localStorage
+  const getSessionToken = () => {
+    const session = localStorage.getItem("session");
+    if (session) {
+      try {
+        const sessionData = JSON.parse(session);
+        // ABDM returns access_token in /sessions API
+        return sessionData.access_token || sessionData.token || null;
+      } catch (e) {
+        console.error("Failed to parse session data", e);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Utility to generate UUID v4-like string
+  // const generateUUID = () => {
+  //   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+  //     const r = (Math.random() * 16) | 0;
+  //     const v = c === "x" ? r : (r & 0x3) | 0x8;
+  //     return v.toString(16);
+  //   });
+  // };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (aadharNumber.length !== 12) {
       toast({
         title: "Invalid Aadhar Number",
@@ -25,22 +58,81 @@ const AadharVerification = () => {
       return;
     }
 
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    const token = getSessionToken();
+    if (!token) {
       toast({
-        title: "OTP Sent",
-        description: "OTP has been sent to your registered mobile number",
+        title: "Authentication Error",
+        description: "Session expired. Please log in again.",
+        variant: "destructive",
       });
-      navigate("/create-abha/aadhar/otp", { state: { aadharNumber } });
+      navigate("/login");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // const requestId = generateUUID();
+      // const txnId = generateUUID(); // ABDM requires unique txnId per request
+      // const timestamp = new Date().toISOString();
+
+      const response = await fetch(
+        `${API_BASE}/curiomed/v1/abdm/enrollment/request-otp/aadhaar`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            // "REQUEST-ID": requestId,
+            // TIMESTAMP: timestamp,
+            // "X-CM-ID": "sbx", // sandbox mode
+          },
+          body: JSON.stringify({
+            aadhaar: aadharNumber, // correct spelling per ABDM API
+            // txnId: txnId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        const serverTxnId = data.txnId;
+
+        if (!serverTxnId) {
+        throw new Error("No transaction ID received from server");
+      }
+
+        toast({
+          title: "OTP Sent",
+          description: "OTP has been sent to your registered mobile number.",
+        });
+
+
+        // Navigate to OTP entry screen and pass txnId + aadhar
+        navigate("/create-abha/aadhar/otp", { state: { aadharNumber, txnId: serverTxnId } });
+      } else {
+        // const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          data.message || `Failed to send OTP (${response.status})`
+        );
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Network error or service unavailable";
+
+      toast({
+        title: "OTP Request Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const formatAadharNumber = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    const formatted = cleaned.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3');
+    const cleaned = value.replace(/\D/g, "");
+    const formatted = cleaned.replace(/(\d{4})(\d{4})(\d{4})/, "$1 $2 $3");
     return formatted.substring(0, 14); // 12 digits + 2 spaces
   };
 
@@ -49,8 +141,8 @@ const AadharVerification = () => {
       {/* Header */}
       <header className="bg-card/50 backdrop-blur-sm border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => navigate("/create-abha")}
             className="mb-2"
           >
@@ -59,7 +151,9 @@ const AadharVerification = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Aadhar Verification</h1>
-            <p className="text-muted-foreground">Enter your 12-digit Aadhar number</p>
+            <p className="text-muted-foreground">
+              Enter your 12-digit Aadhar number
+            </p>
           </div>
         </div>
       </header>
@@ -116,7 +210,7 @@ const AadharVerification = () => {
                     placeholder="XXXX XXXX XXXX"
                     value={formatAadharNumber(aadharNumber)}
                     onChange={(e) => {
-                      const cleaned = e.target.value.replace(/\D/g, '');
+                      const cleaned = e.target.value.replace(/\D/g, "");
                       if (cleaned.length <= 12) {
                         setAadharNumber(cleaned);
                       }
@@ -129,7 +223,11 @@ const AadharVerification = () => {
                   </p>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading || aadharNumber.length !== 12}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading || aadharNumber.length !== 12}
+                >
                   {isLoading ? (
                     <div className="flex items-center space-x-2">
                       <div className="h-4 w-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
@@ -153,7 +251,8 @@ const AadharVerification = () => {
               <div className="text-sm">
                 <p className="font-medium mb-1">Your data is secure</p>
                 <p className="text-muted-foreground">
-                  Your Aadhar number is encrypted and used only for verification purposes as per UIDAI guidelines.
+                  Your Aadhar number is encrypted and used only for verification
+                  purposes as per UIDAI guidelines.
                 </p>
               </div>
             </div>

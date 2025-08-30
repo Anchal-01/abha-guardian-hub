@@ -1,7 +1,8 @@
+// Dashboard.tsx
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserPlus, ShieldCheck, Heart, LogOut } from "lucide-react";
+import { UserPlus, ShieldCheck, Heart, LogOut, Ban, Trash2, Search, RefreshCw } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -33,17 +34,17 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-4">
             <h2 className="text-3xl font-bold tracking-tight">Welcome to ABHA Portal</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Manage your Ayushman Bharat Health Account. Create new ABHA or verify existing accounts securely.
+              Manage your Ayushman Bharat Health Account. Create, verify, or manage your ABHA securely.
             </p>
           </div>
 
-          {/* Action Cards */}
-          <div className="grid md:grid-cols-2 gap-6">
+          {/* Action Cards Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
             {/* Create ABHA Card */}
             <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm group">
               <CardHeader className="text-center pb-4">
@@ -54,11 +55,12 @@ const Dashboard = () => {
                 </div>
                 <CardTitle className="text-xl">Create ABHA</CardTitle>
                 <CardDescription className="text-center">
-                  Create a new Ayushman Bharat Health Account with multiple verification options
+                  Create a new Ayushman Bharat Health Account
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 <Button 
+                  variant="outline" 
                   className="w-full" 
                   onClick={() => navigate("/create-abha")}
                 >
@@ -67,7 +69,7 @@ const Dashboard = () => {
                 <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
-                    <span>Via Aadhar Number</span>
+                    <span>Via Aadhaar Number</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-primary rounded-full mr-2"></div>
@@ -91,7 +93,7 @@ const Dashboard = () => {
                 </div>
                 <CardTitle className="text-xl">Verify ABHA</CardTitle>
                 <CardDescription className="text-center">
-                  Verify an existing ABHA account and access your health records
+                  Verify an existing ABHA account
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
@@ -105,15 +107,159 @@ const Dashboard = () => {
                 <div className="mt-4 space-y-2 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-                    <span>Quick Verification</span>
+                    <span>Via ABHA Number</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-                    <span>Secure Access</span>
+                    <span>Via Mobile Number</span>
                   </div>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-                    <span>Health Records</span>
+                    <span>Via Aadhaar Number</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
+                    <span>Via ABHA Address</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Deactivate ABHA Card */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm group">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-warning/10 rounded-full p-4 group-hover:bg-warning/20 transition-colors">
+                    <Ban className="h-8 w-8 text-warning" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl">Deactivate ABHA</CardTitle>
+                <CardDescription className="text-center">
+                  Temporarily disable your ABHA account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-warning border-warning hover:bg-warning/10"
+                  onClick={() => navigate("/deactivate-abha")}
+                >
+                  Deactivate Account
+                </Button>
+                <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-warning rounded-full mr-2"></div>
+                    <span>Via Aadhaar OTP</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-warning rounded-full mr-2"></div>
+                    <span>Via ABHA OTP</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Delete ABHA Card */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm group">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-destructive/10 rounded-full p-4 group-hover:bg-destructive/20 transition-colors">
+                    <Trash2 className="h-8 w-8 text-destructive" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl">Delete ABHA</CardTitle>
+                <CardDescription className="text-center">
+                  Permanently delete your ABHA account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-destructive border-destructive hover:bg-destructive/10"
+                  onClick={() => navigate("/delete-abha")}
+                >
+                  Delete Account
+                </Button>
+                <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-destructive rounded-full mr-2"></div>
+                    <span>Via Aadhaar OTP</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-destructive rounded-full mr-2"></div>
+                    <span>Via ABHA OTP</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reactivate ABHA Card */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm group">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-info/10 rounded-full p-4 group-hover:bg-info/20 transition-colors">
+                    <RefreshCw className="h-8 w-8 text-info" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl">Reactivate ABHA</CardTitle>
+                <CardDescription className="text-center">
+                  Restore your deactivated ABHA account
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-info border-info hover:bg-info/10"
+                  onClick={() => navigate("/reactivate-abha")}
+                >
+                  Reactivate Account
+                </Button>
+                <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-info rounded-full mr-2"></div>
+                    <span>Via Aadhaar OTP</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-info rounded-full mr-2"></div>
+                    <span>Via ABHA OTP</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Find ABHA Card */}
+            <Card className="cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm group">
+              <CardHeader className="text-center pb-4">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-accent/10 rounded-full p-4 group-hover:bg-accent/20 transition-colors">
+                    <Search className="h-8 w-8 text-accent" />
+                  </div>
+                </div>
+                <CardTitle className="text-xl">Find ABHA</CardTitle>
+                <CardDescription className="text-center">
+                  Locate your ABHA using registered details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate("/find-abha")}
+                >
+                  Find My ABHA
+                </Button>
+                <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-accent rounded-full mr-2"></div>
+                    <span>By Aadhaar Number</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-accent rounded-full mr-2"></div>
+                    <span>By Mobile Number</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-accent rounded-full mr-2"></div>
+                    <span>By Biometric</span>
                   </div>
                 </div>
               </CardContent>

@@ -1,44 +1,105 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, Heart, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+
 const Login = () => {
-  const [credentials, setCredentials] = useState({ username: "", password: "" });
+  const [credentials, setCredentials] = useState({
+    username: "",
+    password: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // 🔥 Your backend login endpoint
+  const API_BASE_URL = `${API_BASE}/curiomed/v1/auth/login`;
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (credentials.username && credentials.password) {
+    if (!credentials.username.trim() || !credentials.password.trim()) {
+      setError("Please enter both Client ID and Client Secret");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(API_BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Add any other required headers (e.g., auth, origin) if needed
+        },
+        body: JSON.stringify({
+          username: credentials.username.trim(),
+          password: credentials.password.trim(),
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Login API Response:", data); // 🔍 DEBUG: See what you're getting
+
+      if (response.ok) {
+        // ✅ Login successful
+        const token = data.accessToken;
+
+        if (!token) {
+          throw new Error("No access token received");
+        }
+
+        // Store token in localStorage (you can expand this to include expiry, etc.)
+        localStorage.setItem(
+          "session",
+          JSON.stringify({ token })
+        );
+
         toast({
           title: "Login Successful",
-          description: "Welcome to ABHA Management System",
+          description: "You have been successfully logged in.",
         });
+
         navigate("/dashboard");
       } else {
-        toast({
-          title: "Login Failed",
-          description: "Please enter valid credentials",
-          variant: "destructive",
-        });
+        // ❌ Login failed
+        const errorMessage = data.message || "Authentication failed";
+        throw new Error(errorMessage);
       }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Network error or server unreachable";
+
+      setError(errorMessage);
+
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <section className="min-h-screen items-center justify-center flex">
+      <div className="flex items-center justify-center relative">
+      <div className="w-auto w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center mb-4">
@@ -47,7 +108,9 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold tracking-tight">ABHA Portal</h1>
-          <p className="text-muted-foreground">Ayushman Bharat Health Account Management</p>
+          <p className="text-muted-foreground">
+            Ayushman Bharat Health Account Management
+          </p>
         </div>
 
         {/* Login Card */}
@@ -55,33 +118,51 @@ const Login = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Sign In</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access your account
+              Enter your ABDM client credentials
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
+              {/* Client ID */}
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">username</Label>
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Enter your username"
+                  placeholder="Enter your Username"
                   value={credentials.username}
-                  onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                  onChange={(e) =>
+                    setCredentials({
+                      ...credentials,
+                      username: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
+
+              {/* Client Secret */}
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Enter your Password"
                   value={credentials.password}
-                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                  onChange={(e) =>
+                    setCredentials({
+                      ...credentials,
+                     password: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
+
+              {error && (
+                <p className="text-sm text-red-500 text-center">{error}</p>
+              )}
+
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
@@ -108,6 +189,8 @@ const Login = () => {
         </div>
       </div>
     </div>
+    </section>
+    
   );
 };
 
